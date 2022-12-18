@@ -14,7 +14,7 @@ IWebTokenService tokenService = new CryptoWebTokenService(
     new AesWebTokenCryptoProvider(aesEncryptionKey, aesEncryptionIV));
 
 //create token and supply to user
-ITokenContainerModel model = new WebTokenDateIPModel(TimeSpan.FromMinutes(30)), "127.0.0.1");
+ITokenContainerModel model = new WebTokenDateIPModel(TimeSpan.FromMinutes(30), "127.0.0.1");
 var token = tokenService.GenerateToken(model);
 Console.WriteLine($"Token: {token}");
 
