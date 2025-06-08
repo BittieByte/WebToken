@@ -1,13 +1,16 @@
-﻿namespace WebToken.Validation
+﻿using WebToken.Model;
+
+namespace WebToken.Validation
 {
-    public class ValidationResult
+    public class ValidationResult<T> where T : ITokenContainerModel
     {
-        public bool IsValid { get; set; } = true;
-        public string FailureReason { get; set; } = string.Empty;
+        public bool Success { get; set; }
+        public string FailureReason { get; set; }
+        public T Result { get; set; } 
 
         public override string ToString()
         {
-            return IsValid ? "Success" : FailureReason;
+            return Success ? "Success" : FailureReason;
         }
     }
 }

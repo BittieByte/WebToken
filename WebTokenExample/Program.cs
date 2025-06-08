@@ -37,11 +37,15 @@ namespace WebTokenExample
             Console.WriteLine($"Token: {token}");
 
             //validate token when user supplies token
-            Console.WriteLine(WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, out var tokenObject, ("ip", "127.0.0.1"), ("id", WebTokenValidator.SkipValueCheckObject))); // Valid
-            if (tokenObject.TryGetClaim("id", out string id)) Console.WriteLine($"Id: {id}");
-            Console.WriteLine(WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, ("ip", "127.0.0.2"))); // Invalid Ip
+            var tokenResult = WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, ("ip", "127.0.0.1"), ("id", WebTokenValidator.SkipValueCheckObject));
+            Console.WriteLine(tokenResult); // Valid
+            if (tokenResult.Result.TryGetClaim("id", out string id)) Console.WriteLine($"Id: {id}");
+
+            tokenResult = WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, ("ip", "127.0.0.2"));
+            Console.WriteLine(tokenResult); // Invalid Ip
             await Task.Delay(6000);//Wait 6 seconds
-            Console.WriteLine(WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, ("ip", "127.0.0.1"))); // Expired
+            tokenResult = WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, ("ip", "127.0.0.1"));
+            Console.WriteLine(tokenResult); // Expired
         }
     }
 }

@@ -6,14 +6,9 @@ namespace WebToken.Validation
 {
     public class WebTokenValidator
     {
-        public static ValidationResult IsValid<T>(IWebTokenService tokenService,string input,params (string Key, object ExpectedValue)[] requiredClaims) where T : ITokenContainerModel
+        public static ValidationResult<T> IsValid<T>(IWebTokenService tokenService, string input, params (string Key, object ExpectedValue)[] requiredClaims) where T : ITokenContainerModel
         {
-            return IsValid(tokenService, input, out T _, requiredClaims);
-        }
-
-        public static ValidationResult IsValid<T>(IWebTokenService tokenService, string input, out T token, params (string Key, object ExpectedValue)[] requiredClaims) where T : ITokenContainerModel
-        {
-            if(!tokenService.TryDecode(input, out token)) return new ValidationResult { IsValid = false, FailureReason = "Malformed" };
+            if(!tokenService.TryDecode(input, out T token)) return new ValidationResult<T> { Success = false, FailureReason = "Malformed" };
             var now = DateTimeOffset.UtcNow;
 
             var tokenExp = GetDateTimeClaim(token, "exp");
@@ -21,19 +16,21 @@ namespace WebToken.Validation
 
             if (tokenExp.HasValue && now > tokenExp.Value)
             {
-                return new ValidationResult
+                return new ValidationResult<T>
                 {
-                    IsValid = false,
-                    FailureReason = "Token expired"
+                    Success = false,
+                    FailureReason = "Token expired",
+                    Result = token
                 };
             }
 
             if (tokenNbf.HasValue && now < tokenNbf.Value)
             {
-                return new ValidationResult
+                return new ValidationResult<T>
                 {
-                    IsValid = false,
-                    FailureReason = "Token not yet valid (nbf)"
+                    Success = false,
+                    FailureReason = "Token not yet valid (nbf)",
+                    Result = token
                 };
             }
 
@@ -42,26 +39,28 @@ namespace WebToken.Validation
             {
                 if (!token.Claims.TryGetValue(key, out var actualValue))
                 {
-                    return new ValidationResult
+                    return new ValidationResult<T>
                     {
-                        IsValid = false,
-                        FailureReason = $"Missing claim: {key}"
+                        Success = false,
+                        FailureReason = $"Missing claim: {key}",
+                        Result = token
                     };
                 }
 
                 if (expectedValue.GetType() != typeof(SkipValueCheck)) //Use SkipValueCheck to just check if claim exists
                 if (!Equals(actualValue?.ToString(), expectedValue?.ToString())) // Compare as strings for safety
                     {
-                        return new ValidationResult
+                        return new ValidationResult<T>
                         {
-                            IsValid = false,
-                            FailureReason = $"Claim mismatch: {key}. Expected: {expectedValue}, Actual: {actualValue}"
+                            Success = false,
+                            FailureReason = $"Claim mismatch: {key}. Expected: {expectedValue}, Actual: {actualValue}",
+                            Result = token
                         };
                 }
             }
 
             // All checks passed
-            return new ValidationResult { IsValid = true };
+            return new ValidationResult<T> { Success = true, Result = token };
         }
 
         private static DateTimeOffset? GetDateTimeClaim(ITokenContainerModel token, string claimName)
