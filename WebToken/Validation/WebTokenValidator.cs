@@ -49,14 +49,14 @@ namespace WebToken.Validation
                     };
                 }
 
-                // Compare as strings for safety
-                if (!Equals(actualValue?.ToString(), expectedValue?.ToString()))
-                {
-                    return new ValidationResult
+                if (expectedValue.GetType() != typeof(SkipValueCheck)) //Use SkipValueCheck to just check if claim exists
+                if (!Equals(actualValue?.ToString(), expectedValue?.ToString())) // Compare as strings for safety
                     {
-                        IsValid = false,
-                        FailureReason = $"Claim mismatch: {key}. Expected: {expectedValue}, Actual: {actualValue}"
-                    };
+                        return new ValidationResult
+                        {
+                            IsValid = false,
+                            FailureReason = $"Claim mismatch: {key}. Expected: {expectedValue}, Actual: {actualValue}"
+                        };
                 }
             }
 
@@ -76,6 +76,11 @@ namespace WebToken.Validation
 
             return null;
         }
-    }
 
+        public class SkipValueCheck
+        {
+        }
+
+        public static readonly SkipValueCheck SkipValueCheckObject = new();
+    }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using WebToken.Crypto;
+using WebToken.Hash;
 using WebToken.Model;
 using WebToken.Serializer;
 using WebToken.Service;
@@ -36,7 +37,7 @@ namespace WebTokenExample
             Console.WriteLine($"Token: {token}");
 
             //validate token when user supplies token
-            Console.WriteLine(WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, out var tokenObject, ("ip", "127.0.0.1"))); // Valid
+            Console.WriteLine(WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, out var tokenObject, ("ip", "127.0.0.1"), ("id", WebTokenValidator.SkipValueCheckObject))); // Valid
             if (tokenObject.TryGetClaim("id", out string id)) Console.WriteLine($"Id: {id}");
             Console.WriteLine(WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, ("ip", "127.0.0.2"))); // Invalid Ip
             await Task.Delay(6000);//Wait 6 seconds
