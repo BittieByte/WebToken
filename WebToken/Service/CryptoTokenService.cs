@@ -1,6 +1,5 @@
-using System.Linq;
-using System.Text;
 using WebToken.Crypto;
+using WebToken.Hash;
 using WebToken.Model;
 using WebToken.Serializer;
 
@@ -10,18 +9,7 @@ namespace WebToken.Service
     {
         private readonly IWebTokenCryptoProvider _cryptoProvider;
 
-        public CryptoWebTokenService(string hashKey, IWebTokenSerializer serializer,
-            IWebTokenCryptoProvider cryptoProvider) : base(
-            string.Join(string.Empty, hashKey, Encoding.UTF8.GetString(cryptoProvider.GetBytes())),
-            serializer)
-        {
-            _cryptoProvider = cryptoProvider;
-        }
-
-        public CryptoWebTokenService(byte[] hashKey,
-            IWebTokenSerializer serializer, IWebTokenCryptoProvider cryptoProvider) : base(
-            hashKey.Concat(cryptoProvider.GetBytes()).ToArray(),
-            serializer)
+        public CryptoWebTokenService(IWebTokenSerializer serializer, ITokenHashGenerator hashGenerator, IWebTokenCryptoProvider cryptoProvider) : base(serializer, hashGenerator)
         {
             _cryptoProvider = cryptoProvider;
         }

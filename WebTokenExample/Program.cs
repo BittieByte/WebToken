@@ -1,9 +1,9 @@
 ﻿using System.Security.Cryptography;
-using WebToken;
 using WebToken.Crypto;
 using WebToken.Model;
 using WebToken.Serializer;
 using WebToken.Service;
+using WebToken.Validation;
 
 namespace WebTokenExample
 {
@@ -20,50 +20,27 @@ namespace WebTokenExample
             var aesEncryptionIV = Convert.ToBase64String(aes.IV); //static IV in safe storage
 
             IWebTokenService tokenService = new CryptoWebTokenService(
-                tokenHashSalt,
                 new JsonWebTokenSerializer(),
+                new HMAC256Base64TokenHash(tokenHashSalt),
                 new AesWebTokenCryptoProvider(aesEncryptionKey, aesEncryptionIV));
 
+
             //create token
-            ITokenContainerModel model = new WebTokenDateIPModel(TimeSpan.FromSeconds(5), "127.0.0.1");
-            var token = tokenService.GenerateToken(model);
+            ITokenContainerModel model = new WebTokenBuilder<WebTokenModel>()
+                .WithExpiration(TimeSpan.FromSeconds(5))
+                .WithClaim("ip", "127.0.0.1")
+                .WithClaim("id", "test")
+                .Build();
+
+            var token = tokenService.Encode(model);
             Console.WriteLine($"Token: {token}");
 
-
             //validate token when user supplies token
-            Valid(tokenService, new WebTokenDateIPModel(), token, "127.0.0.1"); // Valid
-            Valid(tokenService, new WebTokenDateIPModel(), token, "127.0.0.2"); // Invalid IP
+            Console.WriteLine(WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, out var tokenObject, ("ip", "127.0.0.1"))); // Valid
+            if (tokenObject.TryGetClaim("id", out string id)) Console.WriteLine($"Id: {id}");
+            Console.WriteLine(WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, ("ip", "127.0.0.2"))); // Invalid Ip
             await Task.Delay(6000);//Wait 6 seconds
-            Valid(tokenService, new WebTokenDateIPModel(), token, "127.0.0.1"); // Expired
-        }
-
-        public static void Valid(IWebTokenService tokenService, ITokenContainerModel validationParams, string token, string currentIp)
-        {
-            if (!tokenService.IsTokenValid<WebTokenDateIPModel>(token, validationParams, out var result))
-            {
-                //expire if invalid 
-
-                if ((result != default))
-                {
-                    if (result.Ip != null && result.Ip != currentIp)
-                    {
-                        //InvalidIP ~ Token was generated for a different ip
-                        Console.WriteLine($"InvalidIP");
-                        return;
-                    }
-                    //Token expired
-                    Console.WriteLine("Expired");
-                    return;
-                }
-                //Token Malformed / Attempted tampering
-                Console.WriteLine("Malformed");
-                return;
-            }
-            else
-            {
-                //Valid Token
-                Console.WriteLine("Valid");
-            }
+            Console.WriteLine(WebTokenValidator.IsValid<WebTokenModel>(tokenService, token, ("ip", "127.0.0.1"))); // Expired
         }
     }
 }
