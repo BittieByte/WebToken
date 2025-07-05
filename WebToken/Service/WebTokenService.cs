@@ -12,7 +12,7 @@ namespace WebToken.Service
         private readonly IWebTokenSerializer _serializer;
         private readonly ITokenHashGenerator _hashGenerator;
 
-        public string Delimiter = ".";
+        public string Delimiter = "~";
 
 
         public WebTokenService(IWebTokenSerializer serializer, ITokenHashGenerator hashGenerator)
